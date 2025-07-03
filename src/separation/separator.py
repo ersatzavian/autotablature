@@ -23,13 +23,15 @@ class InstrumentSeparator:
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model_path = config.get('separation.model_path', 'models/separation_model.pth')
         
-        # Load pre-trained model
-        self.model = self._load_model()
-        
         # Instrument classes
         self.instruments = config.get('separation.instruments', [
             'guitar_lead', 'guitar_rhythm', 'bass', 'drums', 'vocals'
         ])
+
+        # Load pre-trained model
+        self.model = self._load_model()
+        
+    
     
     def _load_model(self):
         """Load the pre-trained separation model."""
