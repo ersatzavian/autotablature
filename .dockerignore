@@ -52,3 +52,7 @@ models/
 # Logs
 logs/
 !logs/.gitkeep
+
+# Keep requirements files
+!requirements.txt
+!requirements-lite.txt

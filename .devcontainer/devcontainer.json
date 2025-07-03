@@ -37,7 +37,7 @@
     }
   },
   "forwardPorts": [8888],
-  "postCreateCommand": "python setup.py",
+  "postCreateCommand": "python setup.py && echo 'DevContainer setup complete!'",
   "remoteUser": "vscode",
   "features": {
     "github-cli": "latest"

@@ -1,4 +1,4 @@
-FROM python:3.11-bullseye
+FROM python:3.12-bookworm
 
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
@@ -14,6 +14,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ffmpeg \
     libsndfile1 \
+    libsndfile1-dev \
+    libasound2-dev \
+    portaudio19-dev \
+    python3-dev \
     git \
     vim \
     wget \
@@ -36,15 +40,27 @@ RUN groupadd --gid $USER_GID $USERNAME \
 # Set up working directory
 WORKDIR /workspace
 
-# Copy requirements.txt
+# Copy requirements files
+COPY requirements-lite.txt .
+COPY requirements-dev.txt .
 COPY requirements.txt .
 
-# Install Python dependencies
+# Install Python dependencies (start with lite version)
 RUN pip install --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir -r requirements-dev.txt
+
+# Try to install additional packages that might fail
+RUN pip install --no-cache-dir tensorflow>=2.13.0 || echo "TensorFlow installation failed, continuing..."
+
+# Install essentia if possible
+RUN pip install --no-cache-dir essentia || echo "Essentia installation failed, continuing..."
 
 # Copy the entire project for setup
 COPY . .
+
+# Fix permissions for the workspace directory
+RUN chmod -R 755 /workspace \
+    && chown -R $USERNAME:$USERNAME /workspace
 
 # Set up the Jupyter notebook configuration
 RUN mkdir -p /home/$USERNAME/.jupyter \

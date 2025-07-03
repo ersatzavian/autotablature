@@ -165,3 +165,18 @@ This project includes a DevContainer configuration for Visual Studio Code, which
 - Jupyter notebook server
 - Pre-configured VS Code settings and extensions
 - Persistent volumes for data and models
+
+### Troubleshooting DevContainer Issues
+
+If you encounter issues with the DevContainer:
+
+1. **Package Installation Failures**: Some advanced ML packages (like `tensorflow` or `essentia`) may fail to install. The container is configured to continue with basic functionality.
+
+2. **Guitar Pro Support**: If `PyGuitarPro` package installation fails, the system will fall back to JSON output format.
+
+3. **Building Issues**: 
+   - Try rebuilding the container: `Ctrl+Shift+P` → "Remote-Containers: Rebuild Container"
+   - Clear Docker cache: `docker system prune`
+   - Check Docker Desktop has enough resources allocated
+
+4. **Testing Installation**: Run `python test_environment.py` inside the container to verify what packages are available.
