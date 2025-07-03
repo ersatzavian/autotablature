@@ -1,0 +1,45 @@
+{
+  "name": "AutoTablature Development",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "autotablature",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "njpwerner.autodocstring",
+        "streetsidesoftware.code-spell-checker",
+        "visualstudioexptteam.vscodeintellicode",
+        "ryanluker.vscode-coverage-gutters",
+        "yzhang.markdown-all-in-one",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.flake8Enabled": true,
+        "python.formatting.provider": "black",
+        "python.formatting.blackPath": "/usr/local/bin/black",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": "explicit"
+        },
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "python.testing.nosetestsEnabled": false,
+        "python.testing.pytestArgs": [
+          "tests"
+        ],
+        "jupyter.jupyterServerType": "local"
+      }
+    }
+  },
+  "forwardPorts": [8888],
+  "postCreateCommand": "python setup.py",
+  "remoteUser": "vscode",
+  "features": {
+    "github-cli": "latest"
+  }
+}

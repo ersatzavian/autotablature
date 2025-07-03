@@ -1,0 +1,52 @@
+{
+  "audio": {
+    "sample_rate": 44100,
+    "hop_length": 512,
+    "n_fft": 2048,
+    "n_mels": 128,
+    "trim_db": 20
+  },
+  "separation": {
+    "model_path": "models/separation_model.pth",
+    "instruments": [
+      "guitar_lead",
+      "guitar_rhythm",
+      "bass",
+      "drums",
+      "vocals"
+    ]
+  },
+  "pitch": {
+    "model_path": "models/pitch_model.pth",
+    "fmin": 80,
+    "fmax": 1000,
+    "n_bins": 360,
+    "confidence_threshold": 0.3
+  },
+  "guitar": {
+    "num_strings": 6,
+    "num_frets": 24,
+    "standard_tuning": [
+      64,
+      59,
+      55,
+      50,
+      45,
+      40
+    ]
+  },
+  "training": {
+    "learning_rate": 0.001,
+    "batch_size": 32,
+    "epochs": 100,
+    "validation_split": 0.2
+  },
+  "output": {
+    "format": "gp5",
+    "quality": "high"
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  }
+}

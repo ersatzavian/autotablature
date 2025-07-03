@@ -1,0 +1,191 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Setup",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "setup.py"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Basic Test",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "tests/test_basic.py",
+                "-i",
+                "${input:audioFile}",
+                "-o",
+                "data/output/test_output.json"
+            ],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Component Tests",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "tests/test_components.py",
+                "-i",
+                "${input:audioFile}",
+                "-t",
+                "${input:testComponent}"
+            ],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Open Jupyter Notebook",
+            "type": "shell",
+            "command": "jupyter",
+            "args": [
+                "notebook",
+                "notebooks/audio_analysis_training.ipynb"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Collect Training Data",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "-m",
+                "src.utils.data_collector",
+                "--all",
+                "-o",
+                "data",
+                "-g",
+                "${input:gpDir}",
+                "-a",
+                "${input:audioDir}"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Extract GP Annotations",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "-m",
+                "src.utils.data_collector",
+                "--extract",
+                "-o",
+                "data",
+                "-g",
+                "${input:gpDir}"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Demo",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "examples/audio_to_tab.py",
+                "--input",
+                "${input:audioFile}",
+                "--output",
+                "data/output/output_tab.gp5",
+                "--title",
+                "${input:songTitle}",
+                "--artist",
+                "${input:songArtist}"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Open Demo Notebook",
+            "type": "shell",
+            "command": "jupyter",
+            "args": [
+                "notebook",
+                "notebooks/audio_to_tablature_demo.ipynb"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "audioFile",
+            "description": "Path to audio file",
+            "default": "data/samples/guitar_sample.mp3",
+            "type": "promptString"
+        },
+        {
+            "id": "testComponent",
+            "description": "Component to test",
+            "default": "all",
+            "type": "pickString",
+            "options": ["all", "audio", "separation", "pitch", "rhythm", "tablature"]
+        },
+        {
+            "id": "gpDir",
+            "description": "Directory with Guitar Pro files",
+            "default": "data/guitar_pro",
+            "type": "promptString"
+        },
+        {
+            "id": "audioDir",
+            "description": "Directory with audio files",
+            "default": "data/audio",
+            "type": "promptString"
+        },
+        {
+            "id": "songTitle",
+            "description": "Song title",
+            "default": "AutoTablature Demo",
+            "type": "promptString"
+        },
+        {
+            "id": "songArtist",
+            "description": "Song artist",
+            "default": "AutoTablature",
+            "type": "promptString"
+        }
+    ]
+}

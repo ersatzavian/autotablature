@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  autotablature:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ./data:/workspace/data
+      - ./models:/workspace/models
+      - ./logs:/workspace/logs
+    environment:
+      - PYTHONPATH=/workspace
+    ports:
+      - "8888:8888"  # Jupyter notebook
+      - "5000:5000"  # Flask API (if implemented)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+
+  # Uncomment to add a web interface service if needed
+  # web:
+  #   build:
+  #     context: ./web
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     - autotablature

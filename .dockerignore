@@ -1,0 +1,54 @@
+# Git
+.git
+.gitignore
+
+# Docker
+.docker
+.dockerignore
+
+# VS Code
+.vscode/
+.devcontainer/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+*.cover
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment and virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Data and models - exclude large files
+data/output/
+data/audio/
+data/separated/
+data/training/
+models/
+!models/.gitkeep
+
+# Logs
+logs/
+!logs/.gitkeep
