@@ -86,11 +86,71 @@ The system supports training on your own datasets:
 
 ## Model Training
 
-The system includes several specialized models:
-- **Source Separation Model**: Separates instruments from mixed audio
-- **Pitch Detection Model**: Identifies individual notes and their timing
-- **Rhythm Analysis Model**: Detects tempo, time signatures, and rhythmic patterns
-- **Tablature Generation Model**: Converts detected notes to guitar tablature
+The AutoTablature system includes several AI models that can be trained on your own datasets for improved accuracy and customization to specific musical styles.
+
+### Quick Start Training
+
+Use the quick start script to get training set up quickly:
+
+```bash
+# Check system requirements
+python quick_start_training.py --check-only
+
+# Basic training setup
+python quick_start_training.py --data-dir data
+
+# Training with custom data
+python quick_start_training.py \
+    --data-dir data \
+    --gp-dir /path/to/guitar_pro_files \
+    --audio-dir /path/to/audio_files \
+    --model-type all \
+    --epochs 100
+```
+
+### Training Models
+
+The system includes three main model types:
+
+1. **Instrument Separation Model**: Separates guitar tracks from mixed audio
+2. **Pitch Detection Model**: Identifies individual notes and timing
+3. **Rhythm Analysis Model**: Detects tempo and rhythmic patterns
+
+#### Training Data Preparation
+
+```bash
+# Collect and organize training data
+python -m src.utils.data_collector --all \
+    --output data \
+    --gp-dir path/to/guitar_pro_files \
+    --audio-dir path/to/audio_files
+```
+
+#### Train Models
+
+```bash
+# Train all models
+python examples/train_models.py \
+    --data-path data/training \
+    --model-type all \
+    --epochs 100
+
+# Train specific model
+python examples/train_models.py \
+    --data-path data/training \
+    --model-type pitch \
+    --epochs 150 \
+    --batch-size 64
+```
+
+### Training Requirements
+
+- **GPU**: CUDA-compatible GPU recommended (8GB+ VRAM)
+- **RAM**: 16GB+ for processing large audio files
+- **Storage**: 100GB+ for training data and models
+- **Data**: Paired Guitar Pro files and corresponding audio recordings
+
+For detailed training instructions, see [MODEL_TRAINING_GUIDE.md](MODEL_TRAINING_GUIDE.md).
 
 ## Output Formats
 
