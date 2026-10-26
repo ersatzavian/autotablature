@@ -427,10 +427,14 @@ class TablatureTrack:
 class TablatureDocument:
     """Represents a complete tablature document."""
 
-    # Guitar Pro grid resolution: note onsets are quantized to sixteenth notes
-    GP_SLOTS_PER_WHOLE = 16
+    # Export grid resolution: note onsets are quantized to sixteenth notes
+    SLOTS_PER_WHOLE = 16
     # (channel, effect channel) MIDI pairs per track; channel 9 is reserved for percussion
     GP_CHANNEL_PAIRS = [(0, 1), (2, 3), (4, 5), (6, 7), (10, 11), (12, 13), (14, 15)]
+    # ASCII tab layout: characters per grid slot, and measures per line of tab
+    ASCII_SLOT_WIDTH = 3
+    ASCII_MEASURES_PER_LINE = 2
+    NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
     def __init__(self):
         self.tracks = []
@@ -455,6 +459,8 @@ class TablatureDocument:
             self._save_json(filename)
         elif filename.endswith('.gp5'):
             self._save_guitar_pro(filename)
+        elif filename.endswith('.txt'):
+            self._save_ascii(filename)
         elif filename.endswith('.gpx'):
             raise ValueError("PyGuitarPro cannot write Guitar Pro 6 (.gpx) files; use .gp5")
         else:
@@ -472,7 +478,87 @@ class TablatureDocument:
         
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2)
-    
+
+    def _save_ascii(self, filename):
+        """Save as plain-text ASCII tab."""
+        with open(filename, 'w') as f:
+            f.write(self.to_ascii())
+
+    def to_ascii(self):
+        """
+        Render the document as ASCII tab on the sixteenth-note export grid.
+
+        Each grid slot shows the fret of a note starting there, or dashes.
+        """
+        lines = [f"{self.title or 'AutoTablature Generated'} - {self.artist or 'AutoTablature'}"]
+
+        for track_number, track in enumerate(self.tracks, start=1):
+            # Tuning is listed from string 1 (highest) down
+            labels = [self.NOTE_NAMES[midi_note % 12] for midi_note in track.tuning]
+            labels[0] = labels[0].lower()  # conventional lowercase high e
+            lines += [
+                "",
+                f"Track {track_number}: {track.instrument} ({track.tempo:.0f} BPM, "
+                f"tuning {' '.join(reversed(labels))}, low to high)",
+                "",
+            ]
+
+            measures = [
+                self._ascii_measure(measure, len(track.tuning)) for measure in track.measures
+            ]
+            for start in range(0, len(measures), self.ASCII_MEASURES_PER_LINE):
+                group = measures[start:start + self.ASCII_MEASURES_PER_LINE]
+                header = "   "
+                for offset, (time_signature, rows) in enumerate(group):
+                    title = f"m{start + offset + 1} ({time_signature[0]}/{time_signature[1]})"
+                    header += title.ljust(len(rows[0]) + 1)
+                lines.append(header.rstrip())
+                for string_index, label in enumerate(labels):
+                    lines.append(f"{label:<2}|" + "".join(rows[string_index] + "|" for _, rows in group))
+                lines.append("")
+
+        return "\n".join(lines) + "\n"
+
+    def _ascii_measure(self, measure, num_strings):
+        """Render one measure as a row of text per string."""
+        slots_per_measure, notes_by_slot = self._quantize_notes(measure.notes, measure.time_signature)
+        empty = "-" * self.ASCII_SLOT_WIDTH
+        rows = [[empty] * slots_per_measure for _ in range(num_strings)]
+
+        for slot, by_string in notes_by_slot.items():
+            for string, note in by_string.items():
+                if 1 <= string <= num_strings:
+                    rows[string - 1][slot] = str(self._fret_number(note)).ljust(self.ASCII_SLOT_WIDTH, "-")
+
+        return measure.time_signature, ["".join(row) for row in rows]
+
+    def _quantize_notes(self, notes, time_signature):
+        """
+        Quantize note onsets in a measure to the export grid.
+
+        Returns:
+            tuple: (slots_per_measure, {slot: {string: note}}), keeping the most
+            confident note when several land on the same string and slot
+        """
+        numerator, denominator = time_signature
+        slots_per_beat = self.SLOTS_PER_WHOLE // denominator
+        slots_per_measure = numerator * slots_per_beat
+
+        notes_by_slot = {}
+        for note in notes:
+            slot = int(round(note.beat_position * slots_per_beat))
+            slot = min(max(slot, 0), slots_per_measure - 1)
+            by_string = notes_by_slot.setdefault(slot, {})
+            current = by_string.get(note.string)
+            if current is None or note.confidence > current.confidence:
+                by_string[note.string] = note
+
+        return slots_per_measure, notes_by_slot
+
+    def _fret_number(self, tab_note):
+        """Fret as a non-negative integer (the generator can produce fractional frets)."""
+        return max(0, int(round(tab_note.fret)))
+
     def _save_guitar_pro(self, filename):
         """Save in Guitar Pro 5 format."""
         try:
@@ -567,20 +653,8 @@ class TablatureDocument:
     
     def _fill_gp_voice(self, gp_voice, notes, header):
         """Fill a Guitar Pro voice with beats that cover the whole measure."""
-        time_signature = header.timeSignature
-        slots_per_beat = self.GP_SLOTS_PER_WHOLE // time_signature.denominator.value
-        slots_per_measure = time_signature.numerator * slots_per_beat
-
-        # Quantize note onsets to the grid, keeping the most confident note per string
-        notes_by_slot = {}
-        for note in notes:
-            slot = int(round(note.beat_position * slots_per_beat))
-            slot = min(max(slot, 0), slots_per_measure - 1)
-            by_string = notes_by_slot.setdefault(slot, {})
-            current = by_string.get(note.string)
-            if current is None or note.confidence > current.confidence:
-                by_string[note.string] = note
-
+        time_signature = (header.timeSignature.numerator, header.timeSignature.denominator.value)
+        slots_per_measure, notes_by_slot = self._quantize_notes(notes, time_signature)
         onsets = sorted(notes_by_slot)
 
         # Leading rest before the first note (or a whole-measure rest if empty)
@@ -605,7 +679,7 @@ class TablatureDocument:
 
             gp_beat = guitarpro.models.Beat(
                 gp_voice,
-                duration=guitarpro.models.Duration(value=self.GP_SLOTS_PER_WHOLE // piece),
+                duration=guitarpro.models.Duration(value=self.SLOTS_PER_WHOLE // piece),
             )
             if tab_notes:
                 gp_beat.status = guitarpro.models.BeatStatus.normal
@@ -621,7 +695,7 @@ class TablatureDocument:
         """Create a Guitar Pro note from a tablature note."""
         return guitarpro.models.Note(
             gp_beat,
-            value=max(0, int(round(tab_note.fret))),
+            value=self._fret_number(tab_note),
             string=tab_note.string,
             type=guitarpro.models.NoteType.tie if tie else guitarpro.models.NoteType.normal,
         )
